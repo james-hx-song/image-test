@@ -9,21 +9,27 @@ app = Flask(__name__)
 # image = get_panorama(pano_id=first.pano_id, zoom=1)
 # image.save("test.jpg")
 
-@app.route('/get_image/', methods=['POST'])
+
+@app.route("/get_image/", methods=["POST"])
 def send_image():
     data = request.json
-    lat, lon = float(data.get('lat', 41.8982208)), float(data.get('lon', 12.4764804))
-    iter = int(data.get('iter', 3))
-    asyncio.run(get_image(lat, lon, iter))
-    return jsonify({'status': 'ok'})
+    lat, lon, zoom = (
+        float(data.get("lat", 41.8982208)),
+        float(data.get("lon", 12.4764804)),
+        int(data.get("zoom", 1)),
+    )
+    iter = int(data.get("iter", 3))
+    asyncio.run(get_image(lat, lon, 1, zoom))
+    return jsonify({"status": "ok"})
 
-async def get_image(lat, lon, iter):
+
+async def get_image(lat, lon, iter, zoom):
     async with aiohttp.ClientSession() as session:
-        for i in range(5):
-            panos = search_panoramas(lat=lat+i/100, lon=lon)
+        for i in range(iter):
+            panos = search_panoramas(lat=lat + i / 100, lon=lon)
             for j in range(min(len(panos), iter)):
-                image = get_panorama(pano_id=panos[j].pano_id, zoom=1)
-                image.save(f"test{i}{j}.jpg")
+                image = get_panorama(pano_id=panos[j].pano_id, zoom=zoom)
+                image.save(f"test{i}{j}_zoom{zoom}.jpg")
 
     # loop = asyncio.get_running_loop()
     # for i in range(5):
@@ -32,5 +38,6 @@ async def get_image(lat, lon, iter):
     #         image = await loop.run_in_executor(None, get_panorama, panos[j].pano_id, 1)
     #         image.save(f"test{i}{j}.jpg")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(port=8000)
